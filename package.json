@@ -1,26 +1,18 @@
 {
-  "name": "video-dowloader",
+  "name": "video-downloader",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "tsc && electron .",
+    "dev": "tsc --watch",
+    "build": "tsc",
+    "package": "electron-packager . VideoDownloader --platform=win32 --arch=x64 --out=dist --overwrite"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/SoaresPedronhoDev/Videos-Dowload-Project.git"
-  },
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/SoaresPedronhoDev/Videos-Dowload-Project/issues"
-  },
-  "homepage": "https://github.com/SoaresPedronhoDev/Videos-Dowload-Project#readme",
-  "description": "",
   "dependencies": {
     "electron": "^37.3.0"
   },
   "devDependencies": {
-    "@types/electron": "^1.4.38",
+    "@types/electron": "^37.0.0",
     "@types/node": "^24.3.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.2"
