@@ -2,15 +2,15 @@ body {
   overflow: hidden;
   width: 100%;
   height: 100vh;
-  background-image: url('./images/backgroundStart.jpg'); /* esse é o certo */
-  background-size: cover;     /* preenche a tela */
-  background-position: center; /* centraliza */
+  background-image: url('./images/backgroundImage.png'); 
+  background-size: cover;   
+  background-position: center;
 }
 
 .container {
     display: flex;
     flex-direction: column;
-    justify-content: space-between; /* Espaço entre os elementos */
+    justify-content: space-between;
     align-items: center;
 
     height: 100%;
