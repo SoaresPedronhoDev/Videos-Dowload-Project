@@ -19,8 +19,8 @@ function createWindow() {
 // abrir outra janela
 ipcMain.on('abrir-outra-janela', () => {
   const win = new BrowserWindow({
-    width: 600,
-    height: 400,
+    width: 550,
+    height: 750,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js')
     }
