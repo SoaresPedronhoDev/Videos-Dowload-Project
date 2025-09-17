@@ -1,0 +1,125 @@
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  background: linear-gradient(135deg, #000, #222);
+  color: #f5f5f5;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+
+.containt {
+  width: 500px;
+  background: #1a1a1a;
+  color: #f5f5f5;
+  border-radius: 18px;
+  padding: 30px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.header p {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+
+.button {
+  background: linear-gradient(135deg, #000, #333);
+  border: none;
+  border-radius: 12px;
+  padding: 15px 25px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(255,255,255,0.05);
+}
+
+.button:hover {
+  background: linear-gradient(135deg, #111, #444);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(255,255,255,0.1);
+}
+
+/* ===== Ícone de Pasta ===== */
+.container {
+  position: relative;
+  width: 32px;
+  height: 28px;
+}
+
+.folder {
+  position: absolute;
+  width: 100%;
+  height: 70%;
+  border-radius: 4px;
+  top: 30%;
+  left: 0;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+}
+
+.folder_one {
+  transform: rotate(-5deg);
+  background: #fff;
+}
+
+.folder_two {
+  transform: rotate(5deg);
+  background: #e0e0e0;
+}
+
+.folder_three {
+  transform: rotate(-2deg);
+  background: #ccc;
+}
+
+.folder_four {
+  transform: rotate(2deg);
+  background: #b3b3b3;
+}
+
+
+.active_line {
+  width: 2px;
+  height: 30px;
+  background: #fff;
+  margin-left: 5px;
+}
+
+
+.text {
+  color: #fff;
+}
+
+
+.videos-style {
+  background: #2a2a2a;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  color: #f5f5f5;
+  font-weight: 500;
+  box-shadow: inset 0 2px 6px rgba(255,255,255,0.05);
+}
