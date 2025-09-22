@@ -1,5 +1,5 @@
 
-import { ipcMain, app, BrowserWindow } from 'electron';
+import { ipcMain, app, BrowserWindow, dialog } from 'electron';
 import * as path from 'path';
 
 
@@ -27,6 +27,20 @@ ipcMain.on('abrir-outra-janela', () => {
   });
 
   win.loadFile(path.join(__dirname, '../public/VideosDowloader.html'));
+});
+
+// escolher pasta de dowload
+
+ipcMain.handle("escolher-pasta", async () => {
+  const result = await dialog.showOpenDialog({
+    properties: ["openDirectory"]
+  });
+
+  if (result.canceled) {
+    return null;
+  } else {
+    return result.filePaths[0];
+  }
 });
 
 app.whenReady().then(createWindow);

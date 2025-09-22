@@ -1,8 +1,26 @@
+interface Window {
+  electronAPI: {
+    escolherPasta: () => Promise<string | null>;
+  };
+}
 
+const botaoStart = document.querySelector('#start-button');
+const botao = document.querySelector(".button");
+const caminhoPasta = document.getElementById("caminho-pasta");
 
-const botao = document.querySelector('#start-button');
+// eventro pra abrir outra janela
+botaoStart?.addEventListener('click', () => {
+  window.location.href = './VideosDowloader.html';
+});
 
-botao?.addEventListener('click', () => {
+// evento de escolher pasta de download
+botao?.addEventListener("click", async () => {
+  const pasta = await window.electronAPI.escolherPasta();
+  console.log('deu certo')
 
-    window.location.href = './VideosDowloader.html';
+  if (pasta) {
+    caminhoPasta!.textContent = " Pasta selecionada: " + pasta;
+  } else {
+    caminhoPasta!.textContent = "Escolha sua pasta de Download";
+  }
 });
