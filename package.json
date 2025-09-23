@@ -9,10 +9,11 @@
     "package": "electron-packager . VideoDownloader --platform=win32 --arch=x64 --out=dist --overwrite"
   },
   "dependencies": {
-    "electron": "^37.3.0"
+    "electron": "^37.3.0",
+    "ytdl-core": "^4.11.5"
   },
   "devDependencies": {
-    "@types/electron": "^37.0.0",
+    "@types/electron": "^1.6.12",
     "@types/node": "^24.3.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.2"
