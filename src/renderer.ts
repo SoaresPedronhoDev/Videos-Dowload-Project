@@ -34,7 +34,7 @@ botaoPasta?.addEventListener("click", async () => {
 // baixar video do youtube
 btnEnviar?.addEventListener("click", async () => {
   const pastaTexto = caminhoPastaEl.textContent || "";
-  const pasta = pastaTexto.replace("📂 Pasta selecionada: ", "").trim();
+  const pasta = pastaTexto.replace(" Pasta selecionada: ", "").trim();
   const link = inputLink.value.trim();
 
   if (!link || !pasta) {
