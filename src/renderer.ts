@@ -33,22 +33,21 @@ botaoPasta?.addEventListener("click", async () => {
 
 // baixar video do youtube
 btnEnviar?.addEventListener("click", async () => {
-  const pastaTexto = caminhoPastaEl.textContent || "";
-  const pasta = pastaTexto.replace(" Pasta selecionada: ", "").trim();
   const link = inputLink.value.trim();
+  const pastaTexto = caminhoPastaEl.textContent || "";
+  const pasta = pastaTexto.replace("📂 Pasta selecionada: ", "").trim();
 
   if (!link || !pasta) {
     alert("Escolha uma pasta e insira um link válido.");
     return;
   }
 
-  // chama o main process para baixar o video
   const resultado = await window.electronAPI.baixarVideo(link, pasta);
 
   if (resultado.sucesso) {
-    alert("Vídeo baixado com sucesso!");
+    alert("✅ " + resultado.mensagem);
     inputLink.value = "";
   } else {
-    alert("Erro: " + resultado.mensagem);
+    alert("❌ " + resultado.mensagem);
   }
 });
