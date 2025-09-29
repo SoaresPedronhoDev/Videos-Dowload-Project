@@ -9,9 +9,8 @@
     "package": "electron-packager . VideoDownloader --platform=win32 --arch=x64 --out=dist --overwrite"
   },
   "dependencies": {
-    "@distube/ytdl-core": "^4.16.12",
     "electron": "^37.3.0",
-    "play-dl": "^1.9.7"
+    "yt-dlp-wrap": "^2.3.12"
   },
   "devDependencies": {
     "@types/electron": "^1.6.12",

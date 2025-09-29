@@ -1,45 +1,45 @@
 import { app, BrowserWindow, ipcMain, dialog } from "electron";
 import * as path from "path";
 import fs from "fs";
-import ytdl from "@distube/ytdl-core";
-import play from "play-dl";
+import YtDlpWrap from "yt-dlp-wrap";
 
+// cria a janela principal do app
 function createWindow() {
   const mainWindow = new BrowserWindow({
     width: 550,
     height: 750,
     webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
+      preload: path.join(__dirname, "preload.js"), // conecta com preload (canal entre front e back)
     },
   });
 
+  // carrega a interface principal do app
   mainWindow.loadFile(path.join(__dirname, "../public/index.html"));
 }
 
-// Escolher pasta de download
+// abre a janela para o usuario escolher uma pasta de download
 ipcMain.handle("escolher-pasta", async () => {
   const result = await dialog.showOpenDialog({
-    properties: ["openDirectory"],
+    properties: ["openDirectory"], // só permite escolher pastas
   });
 
   if (result.canceled) return null;
   return result.filePaths[0];
 });
 
-// Baixar vídeo
+// faz o download do video
 ipcMain.handle("baixar-video", async (_event, link: string, pasta: string) => {
   try {
-    console.log("Iniciando download para:", link);
-    
-    // Normaliza diferentes formatos de link
+    console.log("iniciando download para:", link);
+
+    // normaliza diferentes tipos de link do youtube
     let videoId = "";
-    
-    // Extrai ID do vídeo de diferentes formatos de URL
     const patterns = [
       /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
       /youtube\.com\/shorts\/([^&\n?#]+)/,
     ];
-    
+
+    // tenta extrair o id do video
     for (const pattern of patterns) {
       const match = link.match(pattern);
       if (match) {
@@ -47,160 +47,105 @@ ipcMain.handle("baixar-video", async (_event, link: string, pasta: string) => {
         break;
       }
     }
-    
+
+    // se nao encontrou o id, o link é invalido
     if (!videoId) {
-      return { sucesso: false, mensagem: "Link inválido do YouTube. Cole um link válido do YouTube." };
+      return { sucesso: false, mensagem: "link inválido do youtube. cole um link válido." };
     }
-    
-    // Reconstrói o link no formato padrão
+
+    // reconstrói o link no formato padrao
     const normalizedLink = `https://www.youtube.com/watch?v=${videoId}`;
-    console.log("Link normalizado:", normalizedLink);
+    console.log("link normalizado:", normalizedLink);
 
-    // Valida o link
-    if (!ytdl.validateURL(normalizedLink)) {
-      return { sucesso: false, mensagem: "Link inválido do YouTube. Use links de vídeo válidos." };
-    }
+    // cria instancia do yt-dlp
+    const ytDlpWrap = new YtDlpWrap(path.join(__dirname, "../yt-dlp.exe"));
 
-    let info;
+    // tenta pegar informações do video
+    let videoInfo;
     try {
-      console.log("Obtendo informações do vídeo...");
-      info = await ytdl.getInfo(normalizedLink);
-      console.log("Título do vídeo:", info.videoDetails.title);
+      console.log("obtendo informações do video...");
+      const infoResult = await ytDlpWrap.getVideoInfo(normalizedLink);
+      
+      // Verifica se já é um objeto ou se precisa fazer parse
+      if (typeof infoResult === 'string') {
+        videoInfo = JSON.parse(infoResult);
+      } else {
+        videoInfo = infoResult;
+      }
+      
+      console.log("titulo do video:", videoInfo.title);
     } catch (error: any) {
-      console.error("Erro ao obter informações:", error.message);
-      return { 
-        sucesso: false, 
-        mensagem: "Não foi possível obter informações do vídeo. Verifique se o link está correto e se o vídeo não é privado." 
+      console.error("erro ao obter informações:", error.message);
+      return {
+        sucesso: false,
+        mensagem: "não foi possível obter informações do video. verifique se o link está correto ou se o video não é privado.",
       };
     }
 
-    // Verifica se é uma playlist (não suportada)
-    if (info.videoDetails.isLiveContent) {
-      return { sucesso: false, mensagem: "Vídeos ao vivo não podem ser baixados." };
+    // impede download de transmissões ao vivo
+    if (videoInfo.is_live) {
+      return { sucesso: false, mensagem: "videos ao vivo não podem ser baixados." };
     }
 
-    const titulo = info.videoDetails.title.replace(/[<>:"\/\\|?*]/g, "").substring(0, 100);
-    const caminhoArquivo = path.join(pasta, `${titulo}.mp4`);
+    // prepara nome do arquivo
+    const titulo = videoInfo.title.replace(/[<>:"\/\\|?*]/g, "").substring(0, 100);
+    console.log("iniciando download para:", titulo);
 
-    console.log("Iniciando download para:", caminhoArquivo);
-
-    // Função para tentar download com diferentes estratégias
-    const tryDownload = async (strategy: any, attempt: number): Promise<any> => {
-      console.log(`Tentativa ${attempt}: ${strategy.quality} - ${strategy.filter}`);
-      
-      return new Promise((resolve, reject) => {
-        try {
-          const stream = ytdl(normalizedLink, strategy);
-          const extensao = strategy.format;
-          const caminhoArquivoFinal = path.join(pasta, `${titulo}.${extensao}`);
-          
-          const arquivo = fs.createWriteStream(caminhoArquivoFinal);
-          let bytesDownloaded = 0;
-          
-          stream.on("data", (chunk) => {
-            bytesDownloaded += chunk.length;
-          });
-          
-          stream.on("end", () => {
-            console.log(`Download concluído! Bytes baixados: ${bytesDownloaded}`);
-            if (bytesDownloaded > 1000) {
-              resolve({ sucesso: true, mensagem: `Download concluído: ${titulo}.${extensao}` });
-            } else {
-              reject({ sucesso: false, mensagem: "Arquivo muito pequeno, possível corrupção" });
-            }
-          });
-          
-          stream.on("error", (err) => {
-            console.error(`Erro na estratégia ${strategy.quality}:`, err.message);
-            reject(err);
-          });
-          
-          arquivo.on("error", (err) => {
-            console.error("Erro ao escrever arquivo:", err.message);
-            reject(err);
-          });
-          
-          stream.pipe(arquivo);
-          
-        } catch (err) {
-          reject(err);
-        }
-      });
-    };
-
-    // Lista de estratégias de download
-    const downloadStrategies = [
-      { quality: "highest", filter: "audioandvideo", format: "mp4" },
-      { quality: "highestvideo", filter: "videoonly", format: "mp4" },
-      { quality: "highestaudio", filter: "audioonly", format: "mp3" },
-      { quality: "136", filter: "videoonly", format: "mp4" },
-      { quality: "140", filter: "audioonly", format: "m4a" }
+    // estratégias de download simplificadas
+    const downloadOptions = [
+      {
+        format: "best",
+        output: path.join(pasta, `${titulo}.%(ext)s`),
+      },
+      {
+        format: "worst",
+        output: path.join(pasta, `${titulo}.%(ext)s`),
+      },
     ];
 
-    // Tenta cada estratégia sequencialmente
-    for (let i = 0; i < downloadStrategies.length; i++) {
+    // tenta cada estratégia de download
+    for (let i = 0; i < downloadOptions.length; i++) {
+      const option = downloadOptions[i];
+      console.log(`tentativa ${i + 1}: ${option.format}`);
+
       try {
-        const resultado = await tryDownload(downloadStrategies[i], i + 1);
-        if (resultado.sucesso) {
-          return resultado;
+        const args = [
+          normalizedLink,
+          "-f", option.format,
+          "-o", option.output,
+          "--no-playlist",
+          "--no-warnings"
+        ];
+        
+        console.log("Executando comando:", args);
+        await ytDlpWrap.exec(args);
+
+        console.log("download concluído com sucesso");
+        return { sucesso: true, mensagem: `download concluído: ${titulo}` };
+      } catch (error: any) {
+        console.error(`estratégia ${i + 1} falhou:`, error.message);
+
+        if (i === downloadOptions.length - 1) {
+          return {
+            sucesso: false,
+            mensagem: "não foi possível baixar o video. o youtube pode estar bloqueando downloads ou o video pode ter restrições.",
+          };
         }
-      } catch (err: any) {
-        console.error(`Estratégia ${i + 1} falhou:`, err.message);
-        // Aguarda um pouco antes de tentar a próxima estratégia
-        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        // espera 3 segundos antes de tentar a próxima opção
+        await new Promise((resolve) => setTimeout(resolve, 3000));
       }
     }
-    
-    // Se todas as estratégias do ytdl falharam, tenta com play-dl
-    console.log("Tentando download alternativo com play-dl...");
-    try {
-      const stream = await play.stream(normalizedLink, { quality: 3 });
-      
-      const caminhoArquivoFinal = path.join(pasta, `${titulo}.mp4`);
-      const arquivo = fs.createWriteStream(caminhoArquivoFinal);
-      
-      return new Promise((resolve, reject) => {
-        let bytesDownloaded = 0;
-        
-        stream.stream.on("data", (chunk) => {
-          bytesDownloaded += chunk.length;
-        });
-        
-        stream.stream.on("end", () => {
-          console.log(`Download alternativo concluído! Bytes baixados: ${bytesDownloaded}`);
-          if (bytesDownloaded > 1000) {
-            resolve({ sucesso: true, mensagem: `Download concluído (método alternativo): ${titulo}.mp4` });
-          } else {
-            reject({ sucesso: false, mensagem: "Arquivo muito pequeno, possível corrupção" });
-          }
-        });
-        
-        stream.stream.on("error", (err) => {
-          console.error("Erro no download alternativo:", err.message);
-          reject({ sucesso: false, mensagem: "Erro no download alternativo: " + err.message });
-        });
-        
-        arquivo.on("error", (err) => {
-          console.error("Erro ao escrever arquivo:", err.message);
-          reject({ sucesso: false, mensagem: "Erro ao salvar arquivo: " + err.message });
-        });
-        
-        stream.stream.pipe(arquivo);
-      });
-      
-    } catch (playErr: any) {
-      console.error("Download alternativo também falhou:", playErr.message);
-      return { sucesso: false, mensagem: "Todos os métodos de download falharam. O YouTube pode estar bloqueando downloads temporariamente. Tente novamente mais tarde." };
-    }
-
   } catch (err: any) {
-    console.error("Erro inesperado:", err.message);
-    return { sucesso: false, mensagem: "Erro inesperado: " + err.message };
+    console.error("erro inesperado:", err.message);
+    return { sucesso: false, mensagem: "erro inesperado: " + err.message };
   }
 });
 
+// inicializa o app
 app.whenReady().then(createWindow);
 
+// fecha o app quando todas as janelas forem fechadas (menos no macos)
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
 });
