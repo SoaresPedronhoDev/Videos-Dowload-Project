@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain, dialog } from "electron";
 import * as path from "path";
 import fs from "fs";
 import YtDlpWrap from "yt-dlp-wrap";
+import { spawn } from "child_process";
 
 // cria a janela principal do app
 function createWindow() {
@@ -27,8 +28,70 @@ ipcMain.handle("escolher-pasta", async () => {
   return result.filePaths[0];
 });
 
+// funcao para executar yt-dlp com progresso
+function executeYtDlpWithProgress(args: string[], mainWindow: BrowserWindow): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const ytDlpPath = path.join(__dirname, "../yt-dlp.exe");
+    const process = spawn(ytDlpPath, args);
+    
+    let lastProgress = 0;
+    
+    process.stdout.on('data', (data) => {
+      const output = data.toString();
+      console.log('yt-dlp output:', output);
+      
+      // Parse progress from yt-dlp output
+      const progressMatch = output.match(/(\d+\.?\d*)%/);
+      if (progressMatch) {
+        const percentage = parseFloat(progressMatch[1]);
+        if (percentage > lastProgress) {
+          lastProgress = percentage;
+          mainWindow.webContents.send("download-progress", {
+            percentage: percentage,
+            speed: "Calculando...",
+            eta: "Calculando...",
+            status: `Baixando... ${percentage.toFixed(1)}%`
+          });
+        }
+      }
+    });
+    
+    process.stderr.on('data', (data) => {
+      const output = data.toString();
+      console.log('yt-dlp error:', output);
+      
+      // Parse progress from stderr (yt-dlp often outputs progress to stderr)
+      const progressMatch = output.match(/(\d+\.?\d*)%/);
+      if (progressMatch) {
+        const percentage = parseFloat(progressMatch[1]);
+        if (percentage > lastProgress) {
+          lastProgress = percentage;
+          mainWindow.webContents.send("download-progress", {
+            percentage: percentage,
+            speed: "Calculando...",
+            eta: "Calculando...",
+            status: `Baixando... ${percentage.toFixed(1)}%`
+          });
+        }
+      }
+    });
+    
+    process.on('close', (code) => {
+      if (code === 0) {
+        resolve();
+      } else {
+        reject(new Error(`yt-dlp exited with code ${code}`));
+      }
+    });
+    
+    process.on('error', (error) => {
+      reject(error);
+    });
+  });
+}
+
 // faz o download do video
-ipcMain.handle("baixar-video", async (_event, link: string, pasta: string) => {
+ipcMain.handle("baixar-video", async (event, link: string, pasta: string) => {
   try {
     console.log("iniciando download para:", link);
 
@@ -118,7 +181,20 @@ ipcMain.handle("baixar-video", async (_event, link: string, pasta: string) => {
         ];
         
         console.log("Executando comando:", args);
-        await ytDlpWrap.exec(args);
+        
+        // Enviar progresso inicial
+        const mainWindow = BrowserWindow.fromWebContents(event.sender);
+        if (mainWindow) {
+          mainWindow.webContents.send("download-progress", {
+            percentage: 0,
+            speed: "Iniciando...",
+            eta: "Calculando...",
+            status: "Iniciando download..."
+          });
+        }
+        
+        // Usar a nova função com progresso
+        await executeYtDlpWithProgress(args, mainWindow!);
 
         console.log("download concluído com sucesso");
         return { sucesso: true, mensagem: `download concluído: ${titulo}` };
