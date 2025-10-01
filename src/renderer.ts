@@ -8,11 +8,12 @@ interface Window {
   };
 }
 
-
+//elementos da secao de inicio
 const botaoStart = document.querySelector('#start-button') as HTMLButtonElement;
 const botaoPasta = document.querySelector(".button") as HTMLButtonElement;
 const caminhoPastaEl = document.getElementById("caminho-pasta") as HTMLParagraphElement;
 
+//elementos da secao de dowload
 const inputLink = document.getElementById("video-link-input") as HTMLInputElement;
 const btnEnviar = document.getElementById("enviar-link") as HTMLButtonElement;
 
