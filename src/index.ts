@@ -9,6 +9,7 @@ function createWindow() {
   const mainWindow = new BrowserWindow({
     width: 550,
     height: 750,
+    icon: path.join(__dirname, "../public/images/logoImage.png"),
     webPreferences: {
       preload: path.join(__dirname, "preload.js"), // conecta com preload (canal entre front e back)
     },
@@ -129,7 +130,7 @@ ipcMain.handle("baixar-video", async (event, link: string, pasta: string) => {
       console.log("obtendo informações do video...");
       const infoResult = await ytDlpWrap.getVideoInfo(normalizedLink);
       
-      // Verifica se já é um objeto ou se precisa fazer parse
+      //verifica se é um objeto ou se precisa fazer parse
       if (typeof infoResult === 'string') {
         videoInfo = JSON.parse(infoResult);
       } else {

@@ -5,6 +5,7 @@ interface Window {
     escolherPasta: () => Promise<string | null>;
     baixarVideo: (link: string, pasta: string) => Promise<{ sucesso: boolean; mensagem: string }>;
     onDownloadProgress: (callback: (progress: { percentage: number; speed: string; eta: string; status: string }) => void) => void;
+    obterVideosBaixados: () => Promise<Array<{ titulo: string; caminho: string; data: string; tamanho: string }>>;
   };
 }
 
@@ -16,6 +17,12 @@ const caminhoPastaEl = document.getElementById("caminho-pasta") as HTMLParagraph
 //elementos da secao de dowload
 const inputLink = document.getElementById("video-link-input") as HTMLInputElement;
 const btnEnviar = document.getElementById("enviar-link") as HTMLButtonElement;
+
+//elementos da secao de videos
+const btnVerVideos = document.getElementById("btn-ver-videos") as HTMLButtonElement;
+const videosContainer = document.getElementById("videos-container") as HTMLDivElement;
+const videosList = document.getElementById("videos-list") as HTMLDivElement;
+const btnFecharVideos = document.getElementById("btn-fechar-videos") as HTMLButtonElement;
 
 // elementos da barra de progresso
 const progressContainer = document.getElementById("progress-container") as HTMLDivElement;
@@ -61,6 +68,73 @@ function showProgress(show: boolean) {
 // Configurar listener de progresso
 window.electronAPI.onDownloadProgress(updateProgress);
 
+// ===== Funções para gerenciar vídeos =====
+
+// Função para mostrar/ocultar a lista de vídeos
+function toggleVideosContainer() {
+  if (videosContainer.style.display === 'none' || videosContainer.style.display === '') {
+    videosContainer.style.display = 'block';
+    carregarVideosBaixados();
+  } else {
+    videosContainer.style.display = 'none';
+  }
+}
+
+// Função para carregar e exibir os vídeos baixados
+async function carregarVideosBaixados() {
+  try {
+    videosList.innerHTML = '<div class="empty-videos">Carregando vídeos...</div>';
+    
+    const videos = await window.electronAPI.obterVideosBaixados();
+    
+    if (videos.length === 0) {
+      videosList.innerHTML = '<div class="empty-videos">Nenhum vídeo baixado ainda</div>';
+      return;
+    }
+
+    videosList.innerHTML = '';
+    
+    videos.forEach(video => {
+      const videoItem = document.createElement('div');
+      videoItem.className = 'video-item';
+      
+      const dataFormatada = new Date(video.data).toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      
+      videoItem.innerHTML = `
+        <div class="video-title">${video.titulo}</div>
+        <div class="video-info">
+          <span class="video-date">${dataFormatada}</span>
+          <span class="video-size">${video.tamanho}</span>
+        </div>
+      `;
+      
+      // Adicionar evento de clique para abrir o arquivo
+      videoItem.addEventListener('click', () => {
+        // Aqui você pode implementar a abertura do arquivo
+        console.log('Abrir vídeo:', video.caminho);
+      });
+      
+      videosList.appendChild(videoItem);
+    });
+    
+  } catch (error) {
+    console.error('Erro ao carregar vídeos:', error);
+    videosList.innerHTML = '<div class="empty-videos">Erro ao carregar vídeos</div>';
+  }
+}
+
+// Event listeners para os botões de vídeos
+btnVerVideos?.addEventListener('click', toggleVideosContainer);
+btnFecharVideos?.addEventListener('click', () => {
+  videosContainer.style.display = 'none';
+});
+
 // baixar video do youtube
 btnEnviar?.addEventListener("click", async () => {
   const link = inputLink.value.trim();
@@ -86,6 +160,10 @@ btnEnviar?.addEventListener("click", async () => {
         showProgress(false);
         alert("✅ " + resultado.mensagem);
         inputLink.value = "";
+        // Recarregar lista de vídeos se estiver visível
+        if (videosContainer.style.display === 'block') {
+          carregarVideosBaixados();
+        }
       }, 2000);
     } else {
       showProgress(false);
