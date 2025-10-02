@@ -61,7 +61,7 @@ function executeYtDlpWithProgress(args: string[], mainWindow: BrowserWindow): Pr
       const output = data.toString();
       console.log('yt-dlp error:', output);
       
-      // Parse progress from stderr (yt-dlp often outputs progress to stderr)
+      // progresso do dowload
       const progressMatch = output.match(/(\d+\.?\d*)%/);
       if (progressMatch) {
         const percentage = parseFloat(progressMatch[1]);

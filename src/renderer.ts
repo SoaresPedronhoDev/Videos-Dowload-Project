@@ -65,7 +65,7 @@ function showProgress(show: boolean) {
   }
 }
 
-// Configurar listener de progresso
+// cnfigurar listener de progresso
 window.electronAPI.onDownloadProgress(updateProgress);
 
 // ===== Funções para gerenciar vídeos =====
@@ -80,7 +80,7 @@ function toggleVideosContainer() {
   }
 }
 
-// Função para carregar e exibir os vídeos baixados
+// função para carregar e exibir os vídeos baixados
 async function carregarVideosBaixados() {
   try {
     videosList.innerHTML = '<div class="empty-videos">Carregando vídeos...</div>';
@@ -114,7 +114,7 @@ async function carregarVideosBaixados() {
         </div>
       `;
       
-      // Adicionar evento de clique para abrir o arquivo
+      // adicionar evento de clique para abrir o arquivo
       videoItem.addEventListener('click', () => {
         // Aqui você pode implementar a abertura do arquivo
         console.log('Abrir vídeo:', video.caminho);
@@ -129,7 +129,7 @@ async function carregarVideosBaixados() {
   }
 }
 
-// Event listeners para os botões de vídeos
+// event listeners para os botões de vídeos
 btnVerVideos?.addEventListener('click', toggleVideosContainer);
 btnFecharVideos?.addEventListener('click', () => {
   videosContainer.style.display = 'none';
@@ -146,7 +146,7 @@ btnEnviar?.addEventListener("click", async () => {
     return;
   }
 
-  // Mostrar barra de progresso
+  // mostrar barra de progresso
   showProgress(true);
   btnEnviar.disabled = true;
   btnEnviar.textContent = "Baixando...";
