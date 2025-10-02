@@ -9,57 +9,53 @@ interface Window {
   };
 }
 
-//elementos da secao de inicio
-const botaoStart = document.querySelector('#start-button') as HTMLButtonElement;
-const botaoPasta = document.querySelector(".button") as HTMLButtonElement;
-const caminhoPastaEl = document.getElementById("caminho-pasta") as HTMLParagraphElement;
-
-//elementos da secao de dowload
-const inputLink = document.getElementById("video-link-input") as HTMLInputElement;
-const btnEnviar = document.getElementById("enviar-link") as HTMLButtonElement;
-
-//elementos da secao de videos
-const btnVerVideos = document.getElementById("btn-ver-videos") as HTMLButtonElement;
-const videosContainer = document.getElementById("videos-container") as HTMLDivElement;
-const videosList = document.getElementById("videos-list") as HTMLDivElement;
-const btnFecharVideos = document.getElementById("btn-fechar-videos") as HTMLButtonElement;
-
-// elementos da barra de progresso
-const progressContainer = document.getElementById("progress-container") as HTMLDivElement;
-const progressText = document.getElementById("progress-text") as HTMLSpanElement;
-const progressPercentage = document.getElementById("progress-percentage") as HTMLSpanElement;
-const progressFill = document.getElementById("progress-fill") as HTMLDivElement;
-const downloadSpeed = document.getElementById("download-speed") as HTMLSpanElement;
-const timeRemaining = document.getElementById("time-remaining") as HTMLSpanElement;
+// Elementos DOM
+const elements = {
+  botaoStart: document.querySelector('#start-button') as HTMLButtonElement,
+  botaoPasta: document.querySelector(".button") as HTMLButtonElement,
+  caminhoPastaEl: document.getElementById("caminho-pasta") as HTMLParagraphElement,
+  inputLink: document.getElementById("video-link-input") as HTMLInputElement,
+  btnEnviar: document.getElementById("enviar-link") as HTMLButtonElement,
+  btnVerVideos: document.getElementById("btn-ver-videos") as HTMLButtonElement,
+  videosContainer: document.getElementById("videos-container") as HTMLDivElement,
+  videosList: document.getElementById("videos-list") as HTMLDivElement,
+  btnFecharVideos: document.getElementById("btn-fechar-videos") as HTMLButtonElement,
+  progressContainer: document.getElementById("progress-container") as HTMLDivElement,
+  progressText: document.getElementById("progress-text") as HTMLSpanElement,
+  progressPercentage: document.getElementById("progress-percentage") as HTMLSpanElement,
+  progressFill: document.getElementById("progress-fill") as HTMLDivElement,
+  downloadSpeed: document.getElementById("download-speed") as HTMLSpanElement,
+  timeRemaining: document.getElementById("time-remaining") as HTMLSpanElement
+}
 
 //para abrir a outra pagina
-botaoStart?.addEventListener('click', () => {
+elements.botaoStart?.addEventListener('click', () => {
   window.location.href = './VideosDowloader.html';
 });
 
 // para escolher a pasta de dowload
-botaoPasta?.addEventListener("click", async () => {
+elements.botaoPasta?.addEventListener("click", async () => {
   const pasta = await window.electronAPI.escolherPasta();
 
   if (pasta) {
-    caminhoPastaEl.textContent = "📂 Pasta selecionada: " + pasta;
+    elements.caminhoPastaEl.textContent = "📂 Pasta selecionada: " + pasta;
   } else {
-    caminhoPastaEl.textContent = "Escolha sua pasta de Download";
+    elements.caminhoPastaEl.textContent = "Escolha sua pasta de Download";
   }
 });
 
 // funcao para atualizar a barra de progresso
 function updateProgress(progress: { percentage: number; speed: string; eta: string; status: string }) {
-  progressText.textContent = progress.status;
-  progressPercentage.textContent = `${Math.round(progress.percentage)}%`;
-  progressFill.style.width = `${progress.percentage}%`;
-  downloadSpeed.textContent = `Velocidade: ${progress.speed}`;
-  timeRemaining.textContent = `Tempo restante: ${progress.eta}`;
+  elements.progressText.textContent = progress.status;
+  elements.progressPercentage.textContent = `${Math.round(progress.percentage)}%`;
+  elements.progressFill.style.width = `${progress.percentage}%`;
+  elements.downloadSpeed.textContent = `Velocidade: ${progress.speed}`;
+  elements.timeRemaining.textContent = `Tempo restante: ${progress.eta}`;
 }
 
 // funcao para mostrar/esconder a barra de progresso
 function showProgress(show: boolean) {
-  progressContainer.style.display = show ? 'block' : 'none';
+  elements.progressContainer.style.display = show ? 'block' : 'none';
   if (show) {
     updateProgress({ percentage: 0, speed: '--', eta: '--', status: 'Preparando download...' });
   }
@@ -72,27 +68,27 @@ window.electronAPI.onDownloadProgress(updateProgress);
 
 // Função para mostrar/ocultar a lista de vídeos
 function toggleVideosContainer() {
-  if (videosContainer.style.display === 'none' || videosContainer.style.display === '') {
-    videosContainer.style.display = 'block';
+  if (elements.videosContainer.style.display === 'none' || elements.videosContainer.style.display === '') {
+    elements.videosContainer.style.display = 'block';
     carregarVideosBaixados();
   } else {
-    videosContainer.style.display = 'none';
+    elements.videosContainer.style.display = 'none';
   }
 }
 
 // função para carregar e exibir os vídeos baixados
 async function carregarVideosBaixados() {
   try {
-    videosList.innerHTML = '<div class="empty-videos">Carregando vídeos...</div>';
+    elements.videosList.innerHTML = '<div class="empty-videos">Carregando vídeos...</div>';
     
     const videos = await window.electronAPI.obterVideosBaixados();
     
     if (videos.length === 0) {
-      videosList.innerHTML = '<div class="empty-videos">Nenhum vídeo baixado ainda</div>';
+      elements.videosList.innerHTML = '<div class="empty-videos">Nenhum vídeo baixado ainda</div>';
       return;
     }
 
-    videosList.innerHTML = '';
+    elements.videosList.innerHTML = '';
     
     videos.forEach(video => {
       const videoItem = document.createElement('div');
@@ -120,25 +116,25 @@ async function carregarVideosBaixados() {
         console.log('Abrir vídeo:', video.caminho);
       });
       
-      videosList.appendChild(videoItem);
+      elements.videosList.appendChild(videoItem);
     });
     
   } catch (error) {
     console.error('Erro ao carregar vídeos:', error);
-    videosList.innerHTML = '<div class="empty-videos">Erro ao carregar vídeos</div>';
+    elements.videosList.innerHTML = '<div class="empty-videos">Erro ao carregar vídeos</div>';
   }
 }
 
 // event listeners para os botões de vídeos
-btnVerVideos?.addEventListener('click', toggleVideosContainer);
-btnFecharVideos?.addEventListener('click', () => {
-  videosContainer.style.display = 'none';
+elements.btnVerVideos?.addEventListener('click', toggleVideosContainer);
+elements.btnFecharVideos?.addEventListener('click', () => {
+  elements.videosContainer.style.display = 'none';
 });
 
 // baixar video do youtube
-btnEnviar?.addEventListener("click", async () => {
-  const link = inputLink.value.trim();
-  const pastaTexto = caminhoPastaEl.textContent || "";
+elements.btnEnviar?.addEventListener("click", async () => {
+  const link = elements.inputLink.value.trim();
+  const pastaTexto = elements.caminhoPastaEl.textContent || "";
   const pasta = pastaTexto.replace("📂 Pasta selecionada: ", "").trim();
 
   if (!link || !pasta) {
@@ -148,8 +144,8 @@ btnEnviar?.addEventListener("click", async () => {
 
   // mostrar barra de progresso
   showProgress(true);
-  btnEnviar.disabled = true;
-  btnEnviar.textContent = "Baixando...";
+  elements.btnEnviar.disabled = true;
+  elements.btnEnviar.textContent = "Baixando...";
 
   try {
     const resultado = await window.electronAPI.baixarVideo(link, pasta);
@@ -159,9 +155,9 @@ btnEnviar?.addEventListener("click", async () => {
       setTimeout(() => {
         showProgress(false);
         alert("✅ " + resultado.mensagem);
-        inputLink.value = "";
+        elements.inputLink.value = "";
         // Recarregar lista de vídeos se estiver visível
-        if (videosContainer.style.display === 'block') {
+        if (elements.videosContainer.style.display === 'block') {
           carregarVideosBaixados();
         }
       }, 2000);
@@ -173,7 +169,7 @@ btnEnviar?.addEventListener("click", async () => {
     showProgress(false);
     alert("❌ Erro inesperado: " + error);
   } finally {
-    btnEnviar.disabled = false;
-    btnEnviar.textContent = "Baixar";
+    elements.btnEnviar.disabled = false;
+    elements.btnEnviar.textContent = "Baixar";
   }
 });

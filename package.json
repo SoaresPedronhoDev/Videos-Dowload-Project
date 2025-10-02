@@ -6,6 +6,9 @@
     "start": "tsc && electron .",
     "dev": "tsc --watch",
     "build": "tsc",
+    "dist": "npm run build && electron-builder",
+    "dist:win": "npm run build && electron-builder --win",
+    "dist:portable": "npm run build && electron-builder --win portable",
     "package": "electron-packager . VideoDownloader --platform=win32 --arch=x64 --out=release --overwrite"
   },
   "dependencies": {
@@ -15,8 +18,41 @@
     "@types/electron": "^1.6.12",
     "@types/node": "^24.3.0",
     "electron": "^37.3.0",
+    "electron-builder": "^26.0.12",
     "electron-packager": "^17.1.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.2"
+  },
+  "build": {
+    "appId": "com.videodownloader.app",
+    "productName": "Video Downloader",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "public/**/*",
+      "yt-dlp.exe",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "public/images/logoImage.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
   }
 }
