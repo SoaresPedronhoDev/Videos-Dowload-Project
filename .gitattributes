@@ -1,0 +1,1 @@
+release/VideoDownloader-win32-x64/VideoDownloader.exe filter=lfs diff=lfs merge=lfs -text
