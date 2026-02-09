@@ -4,6 +4,24 @@ import fs from "fs";
 import YtDlpWrap from "yt-dlp-wrap";
 import { spawn } from "child_process";
 
+// path do yt-dlp: usa userData do Electron (evita caminhos com acentos, ex: "Área de Trabalho")
+function getYtDlpPath(): string {
+  const userData = app.getPath("userData");
+  return path.join(userData, "yt-dlp.exe");
+}
+
+// garante que o binário yt-dlp existe (baixa do GitHub na primeira execução)
+async function ensureYtDlpBinary(): Promise<string> {
+  const ytDlpPath = getYtDlpPath();
+  if (fs.existsSync(ytDlpPath)) return ytDlpPath;
+  const dir = path.dirname(ytDlpPath);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  console.log("baixando yt-dlp pela primeira vez...");
+  await YtDlpWrap.downloadFromGithub(ytDlpPath, undefined, process.platform);
+  console.log("yt-dlp pronto em:", ytDlpPath);
+  return ytDlpPath;
+}
+
 // cria a janela principal do app
 function createWindow() {
   const mainWindow = new BrowserWindow({
@@ -30,14 +48,13 @@ ipcMain.handle("escolher-pasta", async () => {
 });
 
 // funcao para executar yt-dlp com progresso
-function executeYtDlpWithProgress(args: string[], mainWindow: BrowserWindow): Promise<void> {
+function executeYtDlpWithProgress(ytDlpPath: string, args: string[], mainWindow: BrowserWindow): Promise<void> {
   return new Promise((resolve, reject) => {
-    const ytDlpPath = path.join(__dirname, "../yt-dlp.exe");
-    const process = spawn(ytDlpPath, args);
+    const proc = spawn(ytDlpPath, args);
     
     let lastProgress = 0;
-    
-    process.stdout.on('data', (data) => {
+
+    proc.stdout.on('data', (data) => {
       const output = data.toString();
       console.log('yt-dlp output:', output);
       
@@ -57,7 +74,7 @@ function executeYtDlpWithProgress(args: string[], mainWindow: BrowserWindow): Pr
       }
     });
     
-    process.stderr.on('data', (data) => {
+    proc.stderr.on('data', (data) => {
       const output = data.toString();
       console.log('yt-dlp error:', output);
       
@@ -77,7 +94,7 @@ function executeYtDlpWithProgress(args: string[], mainWindow: BrowserWindow): Pr
       }
     });
     
-    process.on('close', (code) => {
+    proc.on('close', (code) => {
       if (code === 0) {
         resolve();
       } else {
@@ -85,7 +102,7 @@ function executeYtDlpWithProgress(args: string[], mainWindow: BrowserWindow): Pr
       }
     });
     
-    process.on('error', (error) => {
+    proc.on('error', (error) => {
       reject(error);
     });
   });
@@ -94,6 +111,7 @@ function executeYtDlpWithProgress(args: string[], mainWindow: BrowserWindow): Pr
 // faz o download do video
 ipcMain.handle("baixar-video", async (event, link: string, pasta: string) => {
   try {
+    const ytDlpPath = await ensureYtDlpBinary();
     console.log("iniciando download para:", link);
 
     // normaliza diferentes tipos de link do youtube
@@ -122,7 +140,7 @@ ipcMain.handle("baixar-video", async (event, link: string, pasta: string) => {
     console.log("link normalizado:", normalizedLink);
 
     // cria instancia do yt-dlp
-    const ytDlpWrap = new YtDlpWrap(path.join(__dirname, "../yt-dlp.exe"));
+    const ytDlpWrap = new YtDlpWrap(ytDlpPath);
 
     // tenta pegar informações do video
     let videoInfo;
@@ -195,7 +213,7 @@ ipcMain.handle("baixar-video", async (event, link: string, pasta: string) => {
         }
         
         // Usar a nova função com progresso
-        await executeYtDlpWithProgress(args, mainWindow!);
+        await executeYtDlpWithProgress(ytDlpPath, args, mainWindow!);
 
         console.log("download concluído com sucesso");
         return { sucesso: true, mensagem: `download concluído: ${titulo}` };
